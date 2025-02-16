@@ -15,10 +15,12 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-musl
+            runner: ubuntu-latest
             asset_name: ${{ github.event.repository.name }}-amd64
           - target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
             asset_name: ${{ github.event.repository.name }}-aarch64
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - run: rustup update stable && rustup default stable
