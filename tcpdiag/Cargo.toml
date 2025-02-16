@@ -1,0 +1,14 @@
+[package]
+name = "tcpdiag"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5.21", features = ["derive"] }
+libc = "0.2.162"
+netlink-sys = "0.8.6"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.132"
+zerocopy = { version = "0.8.18", features = ["derive", "std"] }
+csv = { path = "../csv" }
+csv-derive = { path = "../csv-derive" }

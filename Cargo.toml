@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+members = ["csv", "csv-derive", "tcpdiag", "synconn"]
+default-members = ["tcpdiag"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+# -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
