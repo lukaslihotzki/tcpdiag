@@ -107,6 +107,7 @@ checksum = "5b63caa9aa9397e2d9480a9b13673856c78d8ac123288526c37d7839f2a86990"
 name = "csv"
 version = "0.1.0"
 dependencies = [
+ "csv-derive",
  "itoa",
 ]
 
@@ -249,7 +250,6 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "csv",
- "csv-derive",
  "libc",
  "netlink-sys",
  "serde",

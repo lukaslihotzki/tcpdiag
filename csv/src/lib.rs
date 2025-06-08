@@ -319,3 +319,6 @@ pub const fn post_process(mut string: &[u8]) -> &str {
         Err(_) => panic!(),
     }
 }
+
+#[cfg(feature = "derive")]
+pub use csv_derive::{Csv, CsvWrite};

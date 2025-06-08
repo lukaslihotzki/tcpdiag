@@ -5,3 +5,7 @@ edition = "2021"
 
 [dependencies]
 itoa = "1.0.14"
+csv-derive = { path = "../csv-derive", optional = true }
+
+[features]
+derive = ["csv-derive"]

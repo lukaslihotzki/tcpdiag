@@ -176,14 +176,14 @@ struct CsvOutput<T: Write> {
     trailer: &'static str,
 }
 
-#[derive(csv_derive::CsvWrite)]
+#[derive(CsvWrite)]
 struct CsvLine<'a> {
     time: u64,
     #[csv(flatten())]
     data: Option<InetDiagMsgExtra<'a>>,
 }
 
-#[derive(csv_derive::Csv)]
+#[derive(Csv)]
 struct CsvLineOwned {
     time: u64,
     #[csv(flatten())]

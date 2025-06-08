@@ -29,8 +29,7 @@ the input format is detected automatically.
 
 This repository is a workspace that also contains other crates. csv is a custom
 crate to serialize data as csv. In contrast to the existing csv crate for
-serde, it supports nested fields and static computation of the CSV header. It
-uses custom traits that can be derived automatically by csv-derive.
+serde, it supports nested fields and static computation of the CSV header.
 The synconn crate creates synthetic connections for tests and benchmarks. It is
 used by `./test.sh`.
 

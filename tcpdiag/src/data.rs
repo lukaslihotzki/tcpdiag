@@ -7,7 +7,6 @@ use crate::integer::{wrapper_traits, NlU64, U16BE, U64NE};
 use crate::serde_context::{SerializeWithContext, SerializerExt};
 
 use csv::{Csv, CsvWrite};
-use csv_derive::{Csv, CsvWrite};
 
 /* Modifiers to GET request */
 pub const NLM_F_ROOT: u16 = 0x100; /* specify tree root */
