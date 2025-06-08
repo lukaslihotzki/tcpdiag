@@ -1,3 +1,5 @@
+pub use serde;
+
 pub trait SerializeWithContext {
     type Context;
     fn serialize<S: serde::Serializer>(
@@ -7,7 +9,7 @@ pub trait SerializeWithContext {
     ) -> Result<S::Ok, S::Error>;
 }
 
-struct ContextWrapper<'a, T: SerializeWithContext> {
+pub struct ContextWrapper<'a, T: SerializeWithContext> {
     base: &'a T,
     context: &'a T::Context,
 }
@@ -39,3 +41,6 @@ impl<S: serde::ser::SerializeStruct> SerializerExt for S {
         self.serialize_field(name, &ContextWrapper { base, context })
     }
 }
+
+#[cfg(feature = "derive")]
+pub use serde_context_derive::SerializeWithContext;

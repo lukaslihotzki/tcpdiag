@@ -30,6 +30,9 @@ the input format is detected automatically.
 This repository is a workspace that also contains other crates. csv is a custom
 crate to serialize data as csv. In contrast to the existing csv crate for
 serde, it supports nested fields and static computation of the CSV header.
+serde-context is a crate that offers contextual serialization with serde. This
+feature is needed because IP address serialization depends on the family, but
+Linux puts the family in a different struct.
 The synconn crate creates synthetic connections for tests and benchmarks. It is
 used by `./test.sh`.
 

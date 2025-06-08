@@ -1,0 +1,8 @@
+[package]
+name = "serde-context"
+version = "0.1.0"
+edition = "2021"
+description = "Contextual serialization with serde"
+
+[dependencies]
+serde = { version = "1.0.215" }

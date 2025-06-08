@@ -11,3 +11,4 @@ serde = { version = "1.0.215", features = ["derive"] }
 serde_json = "1.0.132"
 zerocopy = { version = "0.8.18", features = ["derive", "std"] }
 csv = { path = "../csv", features = ["derive"] }
+serde-context = { path = "../serde-context" }

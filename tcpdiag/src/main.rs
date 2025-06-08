@@ -1,6 +1,5 @@
 mod data;
 mod integer;
-mod serde_context;
 mod timespec;
 
 use csv::{Csv, CsvWrite};

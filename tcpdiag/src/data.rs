@@ -4,7 +4,7 @@ use serde::{ser::SerializeStruct, Deserialize, Serialize};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::integer::{wrapper_traits, NlU64, U16BE, U64NE};
-use crate::serde_context::{SerializeWithContext, SerializerExt};
+use serde_context::{SerializeWithContext, SerializerExt};
 
 use csv::{Csv, CsvWrite};
 

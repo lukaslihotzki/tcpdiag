@@ -201,6 +201,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-context"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_derive"
 version = "1.0.215"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -253,6 +260,7 @@ dependencies = [
  "libc",
  "netlink-sys",
  "serde",
+ "serde-context",
  "serde_json",
  "zerocopy",
 ]
