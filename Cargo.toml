@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["csv", "csv-derive", "tcpdiag", "synconn", "serde-context"]
+members = ["csv", "csv-derive", "tcpdiag", "synconn", "serde-context", "serde-context-derive"]
 default-members = ["tcpdiag"]
 
 [profile.release]

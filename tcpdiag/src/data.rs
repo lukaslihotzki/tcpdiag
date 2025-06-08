@@ -1,10 +1,10 @@
 use std::str::FromStr;
 
-use serde::{ser::SerializeStruct, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::integer::{wrapper_traits, NlU64, U16BE, U64NE};
-use serde_context::{SerializeWithContext, SerializerExt};
+use serde_context::SerializeWithContext;
 
 use csv::{Csv, CsvWrite};
 
@@ -108,39 +108,33 @@ impl csv::Csv for IpAddrUnspec {
     }
 }
 
-#[derive(KnownLayout, Immutable, FromBytes, IntoBytes, Default, Debug, Deserialize, Csv)]
+#[derive(
+    KnownLayout,
+    Immutable,
+    FromBytes,
+    IntoBytes,
+    Default,
+    Debug,
+    SerializeWithContext,
+    Deserialize,
+    Csv,
+)]
 #[repr(C)]
 #[csv(context(u8))]
+#[context(family: u8)]
 pub struct InetDiagSockid {
     pub sport: U16BE,
     pub dport: U16BE,
 
     #[csv(pass(ctx))]
+    #[pass(family)]
     pub src: IpAddrUnspec,
     #[csv(pass(ctx))]
+    #[pass(family)]
     pub dst: IpAddrUnspec,
 
     pub ifindex: u32,
     pub cookie: NlU64,
-}
-
-impl SerializeWithContext for InetDiagSockid {
-    type Context = u8;
-
-    fn serialize<S: serde::Serializer>(
-        &self,
-        context: &Self::Context,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error> {
-        let mut x = serializer.serialize_struct("InetDiagSockid", 6)?;
-        x.serialize_field("sport", &self.sport)?;
-        x.serialize_field("dport", &self.dport)?;
-        x.serialize_field_with_context("src", &self.src, context)?;
-        x.serialize_field_with_context("dst", &self.dst, context)?;
-        x.serialize_field("ifindex", &self.ifindex)?;
-        x.serialize_field("cookie", &self.cookie)?;
-        x.end()
-    }
 }
 
 #[derive(KnownLayout, Immutable, FromBytes, IntoBytes, Default, Debug)]
@@ -224,7 +218,7 @@ pub struct NlAttribute {
     pub data: [u8],
 }
 
-#[derive(KnownLayout, Immutable, FromBytes, IntoBytes, Default, Csv)]
+#[derive(KnownLayout, Immutable, FromBytes, IntoBytes, Default, Csv, SerializeWithContext)]
 #[repr(C)]
 pub struct InetDiagReqV2 {
     pub family: u8,
@@ -234,6 +228,7 @@ pub struct InetDiagReqV2 {
     pub states: u32,
 
     #[csv(pass(obj.family))]
+    #[pass(family)]
     pub id: InetDiagSockid,
 }
 
@@ -281,7 +276,17 @@ impl csv::Csv for Wscale {
     }
 }
 
-#[derive(KnownLayout, Immutable, FromBytes, IntoBytes, Debug, Default, Deserialize, Csv)]
+#[derive(
+    KnownLayout,
+    Immutable,
+    FromBytes,
+    IntoBytes,
+    Debug,
+    Default,
+    Deserialize,
+    Csv,
+    SerializeWithContext,
+)]
 #[repr(C)]
 pub struct InetDiagMsg {
     family: u8,
@@ -290,6 +295,7 @@ pub struct InetDiagMsg {
     retrans: u8,
 
     #[csv(pass(obj.family))]
+    #[pass(family)]
     id: InetDiagSockid,
 
     expires: u32,
@@ -297,23 +303,6 @@ pub struct InetDiagMsg {
     wqueue: u32,
     uid: u32,
     inode: u32,
-}
-
-impl Serialize for InetDiagMsg {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut x = serializer.serialize_struct("InetDiagMsg", 10)?;
-        x.serialize_field("family", &self.family)?;
-        x.serialize_field("state", &self.state)?;
-        x.serialize_field("timer", &self.timer)?;
-        x.serialize_field("retrans", &self.retrans)?;
-        x.serialize_field_with_context("id", &self.id, &self.family)?;
-        x.serialize_field("expires", &self.expires)?;
-        x.serialize_field("rqueue", &self.rqueue)?;
-        x.serialize_field("wqueue", &self.wqueue)?;
-        x.serialize_field("uid", &self.uid)?;
-        x.serialize_field("inode", &self.inode)?;
-        x.end()
-    }
 }
 
 #[derive(KnownLayout, Immutable, FromBytes, IntoBytes, Debug, Serialize, Deserialize, Csv)]

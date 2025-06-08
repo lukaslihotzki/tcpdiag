@@ -6,3 +6,7 @@ description = "Contextual serialization with serde"
 
 [dependencies]
 serde = { version = "1.0.215" }
+serde-context-derive = { path = "../serde-context-derive", optional = true }
+
+[features]
+derive = ["serde-context-derive"]

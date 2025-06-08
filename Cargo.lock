@@ -205,6 +205,17 @@ name = "serde-context"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde-context-derive",
+]
+
+[[package]]
+name = "serde-context-derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde",
+ "syn",
 ]
 
 [[package]]
