@@ -120,16 +120,13 @@ impl csv::Csv for IpAddrUnspec {
     Csv,
 )]
 #[repr(C)]
-#[csv(context(u8))]
 #[context(family: u8)]
 pub struct InetDiagSockid {
     pub sport: U16BE,
     pub dport: U16BE,
 
-    #[csv(pass(ctx))]
     #[pass(family)]
     pub src: IpAddrUnspec,
-    #[csv(pass(ctx))]
     #[pass(family)]
     pub dst: IpAddrUnspec,
 
@@ -227,7 +224,6 @@ pub struct InetDiagReqV2 {
     pub pad: u8,
     pub states: u32,
 
-    #[csv(pass(obj.family))]
     #[pass(family)]
     pub id: InetDiagSockid,
 }
@@ -294,7 +290,6 @@ pub struct InetDiagMsg {
     timer: u8,
     retrans: u8,
 
-    #[csv(pass(obj.family))]
     #[pass(family)]
     id: InetDiagSockid,
 

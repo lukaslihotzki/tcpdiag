@@ -2,12 +2,24 @@ extern crate proc_macro;
 
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{parse_macro_input, Attribute, DeriveInput};
+use syn::{parse2, parse_macro_input, parse_quote, Attribute, DeriveInput, PatType};
 
 fn getattr(attrs: &[Attribute], namet: &str) -> Option<TokenStream> {
-    let mut aa = None;
+    let mut unqualified_attr = None;
+    let mut qualified_attr = None;
+
     for attr in attrs {
         if let syn::Meta::List(lst) = &attr.meta {
+            // check for unqualified attributes like #[pass(...)]
+            if lst
+                .path
+                .get_ident()
+                .map(|ident| *ident == namet)
+                .unwrap_or(false)
+            {
+                unqualified_attr = Some(lst.tokens.to_token_stream());
+            }
+            // check for qualified attributes like #[csv(pass(...))]
             if lst
                 .path
                 .get_ident()
@@ -23,7 +35,7 @@ fn getattr(attrs: &[Attribute], namet: &str) -> Option<TokenStream> {
                         let proc_macro2::TokenTree::Group(g) = a.next().unwrap() else {
                             panic!()
                         };
-                        aa = Some(g.stream());
+                        qualified_attr = Some(g.stream());
                     } else {
                         a.next().unwrap();
                     }
@@ -31,7 +43,8 @@ fn getattr(attrs: &[Attribute], namet: &str) -> Option<TokenStream> {
             }
         }
     }
-    aa
+
+    qualified_attr.or(unqualified_attr)
 }
 
 fn derive_csv_int(input: &syn::DeriveInput) -> proc_macro2::TokenStream {
@@ -76,7 +89,12 @@ pub fn derive_csv(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 fn derive_csv_write_int(input: &syn::DeriveInput) -> proc_macro2::TokenStream {
     let struct_name = &input.ident;
     let generics = &input.generics;
-    let context = getattr(&input.attrs, "context");
+
+    let (context_name, ctx) = getattr(&input.attrs, "context")
+        .map(|x| parse2::<PatType>(x).unwrap())
+        .map(|x| (x.pat, *x.ty))
+        .unwrap_or_else(|| (parse_quote!(_), parse_quote!(())));
+
     let syn::Data::Struct(s) = &input.data else {
         panic!("derive_csv can only be used on structs.")
     };
@@ -104,7 +122,6 @@ fn derive_csv_write_int(input: &syn::DeriveInput) -> proc_macro2::TokenStream {
         })
         .collect();
     let (rtypef, rtypet) = r_types.split_first().unwrap();
-    let ctx = context.unwrap_or_else(|| quote! { () });
     let pass: Vec<_> = s
         .fields
         .iter()
@@ -132,9 +149,9 @@ fn derive_csv_write_int(input: &syn::DeriveInput) -> proc_macro2::TokenStream {
                 #((#snames, &<#t_types as csv::CsvWrite<#types>>::DESC)),*
             ]);
 
-            fn write<W: std::io::Write>(obj: &Self, ctx: &Self::Context, w: &mut W) {
-                <#rtypef>::write(&obj.#first, &#passf, w);
-                #(write!(w, " ").unwrap(); <#rtypet>::write(&obj.#tail, &#passt, w);)*
+            fn write<W: std::io::Write>(&Self { #(ref #names),* }: &Self, #context_name: &Self::Context, w: &mut W) {
+                <#rtypef>::write(#first, &#passf, w);
+                #(write!(w, " ").unwrap(); <#rtypet>::write(#tail, &#passt, w);)*
             }
         }
     }
