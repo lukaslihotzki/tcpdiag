@@ -1,21 +1,24 @@
+mod binary;
+mod csv;
 mod data;
 mod integer;
+mod json;
 mod timespec;
 
-use csv::{Csv, CsvWrite};
 use netlink_sys::{protocols::NETLINK_SOCK_DIAG, Socket, SocketAddr};
-use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap,
-    io::{BufRead, BufReader, BufWriter, Read, StdinLock, Write},
+    io::{BufRead, BufReader, BufWriter},
     num::NonZeroU32,
-    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant, SystemTime},
 };
 use timespec::Timespec;
 use zerocopy::IntoBytes;
 
+use binary::{read_binary, BinaryOutput};
+use csv::{read_csv, CsvOutput};
 use data::*;
 use integer::U16BE;
+use json::{read_json, JsonOutput};
 
 fn send_request(sock: &Socket, args: &Args, family: u8) {
     let msg = Encap {
@@ -93,157 +96,6 @@ trait Output {
     fn end(&mut self, duration: Duration);
 }
 
-struct BinaryOutput<T: Write> {
-    writer: T,
-}
-
-impl<T: Write> BinaryOutput<T> {
-    fn new(writer: T) -> Self {
-        Self { writer }
-    }
-
-    fn write_ts(&mut self, ty: u16, data: &[u8]) {
-        self.push_header(ty, data.len());
-        self.writer.write_all(data).unwrap();
-    }
-
-    fn push_header(&mut self, ty: u16, len: usize) {
-        self.writer
-            .write_all(
-                nlattr {
-                    nla_len: u16::try_from(std::mem::size_of::<nlattr>() + len).unwrap(),
-                    nla_type: ty,
-                }
-                .as_bytes(),
-            )
-            .unwrap()
-    }
-}
-
-impl<T: Write> Output for BinaryOutput<T> {
-    fn out(&mut self, data: &[u8]) {
-        self.push_header(0, data.len());
-        self.writer.write_all(data).unwrap();
-    }
-
-    fn start(&mut self, time: SystemTime) {
-        let ts = time.duration_since(UNIX_EPOCH).unwrap().as_micros() as u64;
-        self.write_ts(1, &ts.to_ne_bytes())
-    }
-
-    fn end(&mut self, duration: Duration) {
-        self.write_ts(2, u32::try_from(duration.as_micros()).unwrap().as_bytes());
-        self.writer.flush().unwrap();
-    }
-}
-
-struct JsonOutput<T: Write> {
-    writer: T,
-    comma: &'static str,
-}
-
-impl<T: Write> JsonOutput<T> {
-    fn new(writer: T) -> Self {
-        Self { writer, comma: "" }
-    }
-}
-
-impl<T: Write> Output for JsonOutput<T> {
-    fn start(&mut self, time: SystemTime) {
-        let time = time.duration_since(UNIX_EPOCH).unwrap().as_micros() as u64;
-        write!(&mut self.writer, "{{\"time\":{time},\"samples\":[").unwrap();
-        self.comma = "";
-    }
-
-    fn end(&mut self, duration: Duration) {
-        let time = duration.as_micros() as u64;
-        writeln!(&mut self.writer, "],\"duration\":{time}}}").unwrap();
-        self.writer.flush().unwrap();
-    }
-
-    fn out(&mut self, data: &[u8]) {
-        let extras = InetDiagMsgExtra::parse(data);
-        write!(&mut self.writer, "{}", self.comma).unwrap();
-        serde_json::to_writer(&mut self.writer, &extras).unwrap();
-        self.comma = ",";
-    }
-}
-
-struct CsvOutput<T: Write> {
-    writer: T,
-    time: SystemTime,
-    trailer: &'static str,
-}
-
-#[derive(CsvWrite)]
-struct CsvLine<'a> {
-    time: u64,
-    #[csv(flatten())]
-    data: Option<InetDiagMsgExtra<'a>>,
-}
-
-#[derive(Csv)]
-struct CsvLineOwned {
-    time: u64,
-    #[csv(flatten())]
-    data: Option<InetDiagMsgExtraOwned>,
-    duration: Option<u64>,
-}
-
-const CSV_HEADER: &str = csv::post_process(
-    &const {
-        const DESC: &csv::Desc = &CsvLineOwned::DESC;
-        const SIZE: usize = DESC.desc_size();
-        let mut out = [0; SIZE];
-        let mut writer = csv::Writer::new(&mut out);
-        csv::cprint::<SIZE>(&mut writer, "", DESC);
-        out
-    },
-);
-
-impl<T: Write> CsvOutput<T> {
-    fn new(mut writer: T) -> Self {
-        writeln!(&mut writer, "{CSV_HEADER}").unwrap();
-        Self {
-            writer,
-            time: UNIX_EPOCH,
-            trailer: "",
-        }
-    }
-}
-
-impl<T: Write> Output for CsvOutput<T> {
-    fn start(&mut self, time: SystemTime) {
-        self.time = time;
-        self.trailer = "";
-    }
-
-    fn out(&mut self, data: &[u8]) {
-        write!(&mut self.writer, "{}", self.trailer).unwrap();
-        let time = self.time.duration_since(UNIX_EPOCH).unwrap().as_micros();
-        let line = CsvLine {
-            time: time as u64,
-            data: Some(InetDiagMsgExtra::parse(data)),
-        };
-        CsvLine::write(&line, &(), &mut self.writer);
-        write!(&mut self.writer, "").unwrap();
-        self.trailer = " _\n";
-    }
-
-    fn end(&mut self, duration: Duration) {
-        if self.trailer.is_empty() {
-            let line = CsvLine {
-                time: self.time.duration_since(UNIX_EPOCH).unwrap().as_micros() as u64,
-                data: None,
-            };
-            CsvLine::write(&line, &(), &mut self.writer);
-            write!(&mut self.writer, "").unwrap();
-        }
-        writeln!(&mut self.writer, " {}", duration.as_micros()).unwrap();
-        self.writer.flush().unwrap();
-    }
-}
-
 fn read_netlink(args: &Args, mut writer: Box<dyn Output>) {
     let s = Socket::new(NETLINK_SOCK_DIAG).unwrap();
 
@@ -293,123 +145,6 @@ fn read_netlink(args: &Args, mut writer: Box<dyn Output>) {
             break;
         })
         .sleep_until();
-    }
-}
-
-fn read_binary(mut reader: BufReader<StdinLock>, mut writer: Box<dyn Output>) {
-    let mut buf = Vec::new();
-    loop {
-        let mut attr = nlattr::default();
-        let s = reader.read(attr.as_mut_bytes()).unwrap();
-        if s == 0 {
-            break;
-        }
-        reader.read_exact(&mut attr.as_mut_bytes()[s..]).unwrap();
-        buf.resize(usize::from(attr.nla_len) - std::mem::size_of_val(&attr), 0);
-        reader.read_exact(&mut buf[..]).unwrap();
-        match attr.nla_type {
-            0 => writer.out(&buf[..]),
-            1 => {
-                let time = u64::from_ne_bytes(buf[..].try_into().unwrap());
-                writer.start(UNIX_EPOCH + Duration::from_micros(time));
-            }
-            2 => {
-                let duration = u32::from_ne_bytes(buf[..].try_into().unwrap());
-                writer.end(Duration::from_micros(duration.into()));
-            }
-            _ => panic!(),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-struct JsonFormat {
-    time: u64,
-    samples: Vec<InetDiagMsgExtraOwned>,
-    duration: u32,
-}
-
-fn read_json(mut reader: BufReader<StdinLock>, mut writer: Box<dyn Output>) {
-    let mut buf = String::new();
-    loop {
-        buf.clear();
-        reader.read_line(&mut buf).unwrap();
-        if buf.is_empty() {
-            return;
-        }
-        let Ok(json): Result<JsonFormat, _> = serde_json::from_str(&buf) else {
-            continue;
-        };
-        writer.start(UNIX_EPOCH + Duration::from_micros(json.time));
-        for x in json.samples {
-            writer.out(&x.to_vec());
-        }
-        writer.end(Duration::from_micros(json.duration.into()));
-    }
-}
-
-fn read_csv(mut reader: BufReader<StdinLock>, mut writer: Box<dyn Output>) {
-    let mut header = String::new();
-    loop {
-        reader.read_line(&mut header).unwrap();
-        if header.starts_with('#') {
-            header = Default::default();
-        } else {
-            break;
-        }
-    }
-    let header = header.strip_suffix('\n').unwrap();
-    let mut reorder = None;
-    if !header.starts_with(CSV_HEADER) {
-        let header_map: HashMap<_, _> = header.split(" ").zip(0usize..).collect();
-        reorder = Some(
-            CSV_HEADER
-                .split(" ")
-                .map(|k| header_map.get(k).copied())
-                .collect::<Vec<_>>(),
-        );
-    }
-    let mut buf = String::new();
-    let mut time = UNIX_EPOCH;
-    loop {
-        buf.clear();
-        loop {
-            reader.read_line(&mut buf).unwrap();
-            if buf.is_empty() {
-                return;
-            }
-            if buf.starts_with('#') {
-                buf = Default::default();
-            } else {
-                break;
-            }
-        }
-        let buf = buf.strip_suffix("\n").unwrap();
-        let mut iter = buf.split(' ');
-        let mut fields = Vec::new();
-
-        let line = if let Some(reorder) = &reorder {
-            fields.clear();
-            fields.extend(iter);
-            let mut iter = reorder
-                .iter()
-                .map(|i| i.and_then(|i| fields.get(i)).copied().unwrap_or("_"));
-            CsvLineOwned::read(&mut iter)
-        } else {
-            CsvLineOwned::read(&mut iter)
-        };
-        let time_new = UNIX_EPOCH + Duration::from_micros(line.time);
-        if time != time_new {
-            time = time_new;
-            writer.start(time);
-        }
-        if let Some(data) = &line.data {
-            writer.out(&data.to_vec());
-        }
-        if let Some(end) = line.duration {
-            writer.end(Duration::from_micros(end));
-            continue;
-        }
     }
 }
 
