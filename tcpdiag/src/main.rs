@@ -94,11 +94,11 @@ trait Output {
 }
 
 struct BinaryOutput<T: Write> {
-    writer: BufWriter<T>,
+    writer: T,
 }
 
 impl<T: Write> BinaryOutput<T> {
-    fn new(writer: BufWriter<T>) -> Self {
+    fn new(writer: T) -> Self {
         Self { writer }
     }
 
@@ -138,12 +138,12 @@ impl<T: Write> Output for BinaryOutput<T> {
 }
 
 struct JsonOutput<T: Write> {
-    writer: BufWriter<T>,
+    writer: T,
     comma: &'static str,
 }
 
 impl<T: Write> JsonOutput<T> {
-    fn new(writer: BufWriter<T>) -> Self {
+    fn new(writer: T) -> Self {
         Self { writer, comma: "" }
     }
 }
@@ -170,7 +170,7 @@ impl<T: Write> Output for JsonOutput<T> {
 }
 
 struct CsvOutput<T: Write> {
-    writer: BufWriter<T>,
+    writer: T,
     time: SystemTime,
     trailer: &'static str,
 }
@@ -202,7 +202,7 @@ const CSV_HEADER: &str = csv::post_process(
 );
 
 impl<T: Write> CsvOutput<T> {
-    fn new(mut writer: BufWriter<T>) -> Self {
+    fn new(mut writer: T) -> Self {
         writeln!(&mut writer, "{CSV_HEADER}").unwrap();
         Self {
             writer,
@@ -416,7 +416,7 @@ fn read_csv(mut reader: BufReader<StdinLock>, mut writer: Box<dyn Output>) {
 fn main() {
     let args = Args::parse();
 
-    let stdout = std::io::BufWriter::new(std::io::stdout().lock());
+    let stdout = BufWriter::new(std::io::stdout().lock());
     let writer: Box<dyn Output> = match args.output {
         Format::Json => Box::new(JsonOutput::new(stdout)),
         Format::Binary => Box::new(BinaryOutput::new(stdout)),
