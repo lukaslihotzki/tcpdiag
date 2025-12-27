@@ -2,6 +2,7 @@
 name = "tcpdiag"
 version = "0.1.0"
 edition = "2021"
+description = "Read TCP connection information from the Linux kernel"
 
 [dependencies]
 clap = { version = "4.5.21", features = ["derive"] }

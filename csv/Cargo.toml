@@ -2,6 +2,7 @@
 name = "csv"
 version = "0.1.0"
 edition = "2021"
+description = "Custom CSV serializer and deserializer"
 
 [dependencies]
 itoa = "1.0.14"

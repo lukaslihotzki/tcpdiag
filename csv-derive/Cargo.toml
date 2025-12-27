@@ -2,6 +2,7 @@
 name = "csv-derive"
 version = "0.1.0"
 edition = "2021"
+description = "Custom derive for traits from the csv crate"
 
 [dependencies]
 syn = "2.0"

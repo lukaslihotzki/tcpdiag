@@ -2,5 +2,6 @@
 name = "synconn"
 version = "0.1.0"
 edition = "2021"
+description = "Create synthetic TCP connections for tests and benchmarks"
 
 [dependencies]
