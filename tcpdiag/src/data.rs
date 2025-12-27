@@ -35,7 +35,9 @@ pub const fn request_as(extension: u16) -> u8 {
     }
 }
 
-#[derive(KnownLayout, Immutable, FromBytes, IntoBytes, Default, Debug)]
+#[derive(
+    KnownLayout, Immutable, FromBytes, IntoBytes, Default, Debug, Clone, Copy, PartialEq, Eq, Hash,
+)]
 pub struct IpAddrUnspec([u8; 16]);
 
 impl SerializeWithContext for IpAddrUnspec {

@@ -38,7 +38,9 @@ impl csv::Csv for NlU64 {
 
 pub(crate) use wrapper_traits;
 
-#[derive(Copy, Clone, KnownLayout, Immutable, FromBytes, IntoBytes, Default)]
+#[derive(
+    Copy, Clone, Default, KnownLayout, Immutable, FromBytes, IntoBytes, PartialEq, Eq, Hash,
+)]
 pub struct NlU64([u32; 2]);
 
 impl NlU64 {
@@ -55,7 +57,9 @@ wrapper_traits!(NlU64, [u32; 2]);
 
 macro_rules! wrapper {
     ($name: ident, $mem: ty, $raw: ty, $from: expr, $to: expr) => {
-        #[derive(Copy, Clone, Default, KnownLayout, Immutable, FromBytes, IntoBytes)]
+        #[derive(
+            Copy, Clone, Default, KnownLayout, Immutable, FromBytes, IntoBytes, PartialEq, Eq, Hash,
+        )]
         pub struct $name($mem);
 
         impl $name {
