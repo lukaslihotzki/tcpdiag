@@ -86,4 +86,3 @@ macro_rules! wrapper {
 
 wrapper!(U16BE, [u8; 2], u16, u16::to_be_bytes, u16::from_be_bytes);
 wrapper!(U64NE, [u8; 8], u64, u64::to_ne_bytes, u64::from_ne_bytes);
-wrapper!(I64NE, [u8; 8], i64, i64::to_ne_bytes, i64::from_ne_bytes);

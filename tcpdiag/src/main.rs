@@ -149,19 +149,6 @@ impl<T: Write> JsonOutput<T> {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum Action {
-    Start,
-    End,
-}
-
-#[derive(Serialize, Deserialize)]
-struct Ts {
-    action: Action,
-    time: u64,
-}
-
 impl<T: Write> Output for JsonOutput<T> {
     fn start(&mut self, time: SystemTime) {
         let time = time.duration_since(UNIX_EPOCH).unwrap().as_micros() as u64;
