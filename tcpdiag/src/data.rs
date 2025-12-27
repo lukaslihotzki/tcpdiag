@@ -248,8 +248,8 @@ pub struct Encap {
 
 #[derive(Debug, Serialize, Deserialize, Csv)]
 pub struct WscaleExp {
-    snd: u8,
-    rcv: u8,
+    pub snd: u8,
+    pub rcv: u8,
 }
 
 #[derive(Clone, Copy, KnownLayout, Immutable, FromBytes, IntoBytes)]
@@ -296,119 +296,119 @@ impl csv::Csv for Wscale {
 )]
 #[repr(C)]
 pub struct InetDiagMsg {
-    family: u8,
-    state: u8,
-    timer: u8,
-    retrans: u8,
+    pub family: u8,
+    pub state: u8,
+    pub timer: u8,
+    pub retrans: u8,
 
     #[pass(family)]
-    id: InetDiagSockid,
+    pub id: InetDiagSockid,
 
-    expires: u32,
-    rqueue: u32,
-    wqueue: u32,
-    uid: u32,
-    inode: u32,
+    pub expires: u32,
+    pub rqueue: u32,
+    pub wqueue: u32,
+    pub uid: u32,
+    pub inode: u32,
 }
 
 #[derive(KnownLayout, Immutable, FromBytes, IntoBytes, Debug, Serialize, Deserialize, Csv)]
 #[repr(C)]
 pub struct TcpInfo {
-    state: u8,
-    ca_state: u8,
-    retransmits: u8,
-    probes: u8,
-    backoff: u8,
-    options: u8,
-    wscale: Wscale,
-    flags: u8,
-    rto: u32,
-    ato: u32,
-    snd_mss: u32,
-    rcv_mss: u32,
-    unacked: u32,
-    sacked: u32,
-    lost: u32,
-    retrans: u32,
-    fackets: u32,
-    last_data_sent: u32,
-    last_ack_sent: u32,
-    last_data_recv: u32,
-    last_ack_recv: u32,
-    pmtu: u32,
-    rcv_ssthresh: u32,
-    rtt: u32,
-    rttvar: u32,
-    snd_ssthresh: u32,
-    snd_cwnd: u32,
-    advmss: u32,
-    reordering: u32,
-    rcv_rtt: u32,
-    rcv_space: u32,
-    total_retrans: u32,
-    pacing_rate: U64NE,
-    max_pacing_rate: U64NE,
-    bytes_acked: U64NE,
-    bytes_received: U64NE,
-    segs_out: u32,
-    segs_in: u32,
-    notsent_bytes: u32,
-    min_rtt: u32,
-    data_segs_in: u32,
-    data_segs_out: u32,
-    delivery_rate: U64NE,
-    busy_time: U64NE,
-    rwnd_limited: U64NE,
-    sndbuf_limited: U64NE,
-    delivered: u32,
-    delivered_ce: u32,
-    bytes_sent: U64NE,
-    bytes_retrans: U64NE,
-    dsack_dups: u32,
-    reord_seen: u32,
-    rcv_ooopack: u32,
-    snd_wnd: u32,
+    pub state: u8,
+    pub ca_state: u8,
+    pub retransmits: u8,
+    pub probes: u8,
+    pub backoff: u8,
+    pub options: u8,
+    pub wscale: Wscale,
+    pub flags: u8,
+    pub rto: u32,
+    pub ato: u32,
+    pub snd_mss: u32,
+    pub rcv_mss: u32,
+    pub unacked: u32,
+    pub sacked: u32,
+    pub lost: u32,
+    pub retrans: u32,
+    pub fackets: u32,
+    pub last_data_sent: u32,
+    pub last_ack_sent: u32,
+    pub last_data_recv: u32,
+    pub last_ack_recv: u32,
+    pub pmtu: u32,
+    pub rcv_ssthresh: u32,
+    pub rtt: u32,
+    pub rttvar: u32,
+    pub snd_ssthresh: u32,
+    pub snd_cwnd: u32,
+    pub advmss: u32,
+    pub reordering: u32,
+    pub rcv_rtt: u32,
+    pub rcv_space: u32,
+    pub total_retrans: u32,
+    pub pacing_rate: U64NE,
+    pub max_pacing_rate: U64NE,
+    pub bytes_acked: U64NE,
+    pub bytes_received: U64NE,
+    pub segs_out: u32,
+    pub segs_in: u32,
+    pub notsent_bytes: u32,
+    pub min_rtt: u32,
+    pub data_segs_in: u32,
+    pub data_segs_out: u32,
+    pub delivery_rate: U64NE,
+    pub busy_time: U64NE,
+    pub rwnd_limited: U64NE,
+    pub sndbuf_limited: U64NE,
+    pub delivered: u32,
+    pub delivered_ce: u32,
+    pub bytes_sent: U64NE,
+    pub bytes_retrans: U64NE,
+    pub dsack_dups: u32,
+    pub reord_seen: u32,
+    pub rcv_ooopack: u32,
+    pub snd_wnd: u32,
 }
 
 #[derive(KnownLayout, Immutable, FromBytes, IntoBytes, Debug, Serialize, Deserialize, Csv)]
 #[repr(C)]
 pub struct BbrInfo {
-    bw: NlU64,
-    min_rtt: u32,
-    pacing_gain: u32,
-    cwnd_gain: u32,
+    pub bw: NlU64,
+    pub min_rtt: u32,
+    pub pacing_gain: u32,
+    pub cwnd_gain: u32,
 }
 
 #[derive(KnownLayout, Immutable, FromBytes, IntoBytes, Debug, Serialize, Deserialize, Csv)]
 #[repr(C)]
 pub struct Bbr3Info {
-    bw_hi: NlU64, /* bw_hi */
-    bw_lo: NlU64, /* bw_lo */
-    mode: u8,     /* current bbr_mode in state machine */
-    phase: u8,    /* current state machine phase */
+    pub bw_hi: NlU64, /* bw_hi */
+    pub bw_lo: NlU64, /* bw_lo */
+    pub mode: u8,     /* current bbr_mode in state machine */
+    pub phase: u8,    /* current state machine phase */
 
     #[serde(skip)]
     #[csv(type(csv::Skip))]
     unused1: u8, /* alignment padding; not used yet */
 
-    version: u8,      /* BBR algorithm version */
-    inflight_lo: u32, /* lower short-term data volume bound */
-    inflight_hi: u32, /* higher long-term data volume bound */
-    extra_acked: u32, /* max excess packets ACKed in epoch */
+    pub version: u8,      /* BBR algorithm version */
+    pub inflight_lo: u32, /* lower short-term data volume bound */
+    pub inflight_hi: u32, /* higher long-term data volume bound */
+    pub extra_acked: u32, /* max excess packets ACKed in epoch */
 }
 
 #[derive(Debug, Serialize, CsvWrite)]
 #[non_exhaustive]
 pub struct InetDiagMsgExtra<'a> {
-    base: &'a InetDiagMsg,
+    pub base: &'a InetDiagMsg,
     #[serde(skip_serializing_if = "Option::is_none")]
-    cong: Option<&'a str>,
+    pub cong: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    tcp_info: Option<&'a TcpInfo>,
+    pub tcp_info: Option<&'a TcpInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    bbr: Option<&'a BbrInfo>,
+    pub bbr: Option<&'a BbrInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    bbr3: Option<&'a Bbr3Info>,
+    pub bbr3: Option<&'a Bbr3Info>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Csv)]
