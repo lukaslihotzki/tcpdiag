@@ -18,13 +18,32 @@ use zerocopy::IntoBytes;
 use data::*;
 use integer::U16BE;
 
-pub trait Output {
+pub trait Collector {
     fn out(&mut self, data: &[u8]);
     fn start(&mut self, time: SystemTime);
     fn end(&mut self, duration: Duration);
 }
 
-#[derive(Parser, Debug)]
+pub trait Output<T>: Collector {
+    fn inner_mut(&mut self) -> &mut T;
+    fn into_inner(self) -> T;
+}
+
+macro_rules! impl_output {
+    ($name:ty) => {
+        impl<T: std::io::Write> crate::Output<T> for $name {
+            fn inner_mut(&mut self) -> &mut T {
+                &mut self.writer
+            }
+            fn into_inner(self) -> T {
+                self.writer
+            }
+        }
+    };
+}
+pub(crate) use impl_output;
+
+#[derive(Parser, Debug, Clone)]
 #[group(id = "netlink")]
 pub struct NetlinkArgs {
     #[arg(conflicts_with = "inet6", short = '4')]
@@ -81,8 +100,23 @@ fn send_request(sock: &Socket, args: &NetlinkArgs, family: u8) {
     sock.send_to(msg.as_bytes(), &SocketAddr::new(0, 0), 0)
         .unwrap();
 }
+use std::ops::DerefMut;
 
-pub fn read_netlink(args: &NetlinkArgs, mut writer: Box<dyn Output>) {
+impl Collector for Box<dyn Collector> {
+    fn out(&mut self, data: &[u8]) {
+        self.deref_mut().out(data)
+    }
+
+    fn start(&mut self, time: SystemTime) {
+        self.deref_mut().start(time)
+    }
+
+    fn end(&mut self, duration: Duration) {
+        self.deref_mut().end(duration)
+    }
+}
+
+pub fn read_netlink<C: Collector>(args: &NetlinkArgs, mut writer: C) {
     let s = Socket::new(NETLINK_SOCK_DIAG).unwrap();
 
     let mut buf = Vec::with_capacity(1 << 18);

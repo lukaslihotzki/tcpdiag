@@ -6,12 +6,14 @@ use std::{
 
 use crate::data::*;
 
-use crate::Output;
+use crate::Collector;
 
 pub struct JsonOutput<T: Write> {
     writer: T,
     comma: &'static str,
 }
+
+crate::impl_output!(JsonOutput<T>);
 
 impl<T: Write> JsonOutput<T> {
     pub fn new(writer: T) -> Self {
@@ -19,7 +21,7 @@ impl<T: Write> JsonOutput<T> {
     }
 }
 
-impl<T: Write> Output for JsonOutput<T> {
+impl<T: Write> Collector for JsonOutput<T> {
     fn start(&mut self, time: SystemTime) {
         let time = time.duration_since(UNIX_EPOCH).unwrap().as_micros() as u64;
         write!(&mut self.writer, "{{\"time\":{time},\"samples\":[").unwrap();
@@ -47,7 +49,7 @@ struct JsonFormat {
     duration: u32,
 }
 
-pub fn read_json(mut reader: BufReader<StdinLock>, mut writer: Box<dyn Output>) {
+pub fn read_json(mut reader: BufReader<StdinLock>, mut writer: Box<dyn Collector>) {
     let mut buf = String::new();
     loop {
         buf.clear();

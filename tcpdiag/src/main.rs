@@ -4,8 +4,8 @@ use std::io::{BufRead, BufReader, BufWriter};
 use tcpdiag::binary::{read_binary, BinaryOutput};
 use tcpdiag::csv::{read_csv, CsvOutput};
 use tcpdiag::json::{read_json, JsonOutput};
-use tcpdiag::Output;
 use tcpdiag::{read_netlink, NetlinkArgs};
+use tcpdiag::Collector;
 
 #[derive(Clone, Copy, Debug, clap::ValueEnum)]
 pub enum Format {
@@ -28,7 +28,7 @@ fn main() {
     let args = Args::parse();
 
     let stdout = BufWriter::new(std::io::stdout().lock());
-    let writer: Box<dyn Output> = match args.output {
+    let writer: Box<dyn Collector> = match args.output {
         Format::Json => Box::new(JsonOutput::new(stdout)),
         Format::Binary => Box::new(BinaryOutput::new(stdout)),
         Format::Csv => Box::new(CsvOutput::new(stdout)),

@@ -6,11 +6,13 @@ use zerocopy::IntoBytes;
 
 use crate::data::*;
 
-use crate::Output;
+use crate::Collector;
 
 pub struct BinaryOutput<T: Write> {
     writer: T,
 }
+
+crate::impl_output!(BinaryOutput<T>);
 
 impl<T: Write> BinaryOutput<T> {
     pub fn new(writer: T) -> Self {
@@ -35,7 +37,7 @@ impl<T: Write> BinaryOutput<T> {
     }
 }
 
-impl<T: Write> Output for BinaryOutput<T> {
+impl<T: Write> Collector for BinaryOutput<T> {
     fn out(&mut self, data: &[u8]) {
         self.push_header(0, data.len());
         self.writer.write_all(data).unwrap();
@@ -52,7 +54,7 @@ impl<T: Write> Output for BinaryOutput<T> {
     }
 }
 
-pub fn read_binary(mut reader: BufReader<StdinLock>, mut writer: Box<dyn Output>) {
+pub fn read_binary(mut reader: BufReader<StdinLock>, mut writer: Box<dyn Collector>) {
     let mut buf = Vec::new();
     loop {
         let mut attr = nlattr::default();

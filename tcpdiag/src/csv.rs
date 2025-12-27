@@ -6,7 +6,7 @@ use std::{
 
 use crate::data::*;
 
-use crate::Output;
+use crate::Collector;
 use csv::{Csv, CsvWrite};
 
 pub struct CsvOutput<T: Write> {
@@ -14,6 +14,8 @@ pub struct CsvOutput<T: Write> {
     time: SystemTime,
     trailer: &'static str,
 }
+
+crate::impl_output!(CsvOutput<T>);
 
 #[derive(CsvWrite)]
 struct CsvLine<'a> {
@@ -52,7 +54,7 @@ impl<T: Write> CsvOutput<T> {
     }
 }
 
-impl<T: Write> Output for CsvOutput<T> {
+impl<T: Write> Collector for CsvOutput<T> {
     fn start(&mut self, time: SystemTime) {
         self.time = time;
         self.trailer = "";
@@ -84,7 +86,7 @@ impl<T: Write> Output for CsvOutput<T> {
     }
 }
 
-pub fn read_csv(mut reader: BufReader<StdinLock>, mut writer: Box<dyn Output>) {
+pub fn read_csv(mut reader: BufReader<StdinLock>, mut writer: Box<dyn Collector>) {
     let mut header = String::new();
     loop {
         reader.read_line(&mut header).unwrap();
