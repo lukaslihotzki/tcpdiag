@@ -83,6 +83,15 @@ impl From<std::net::Ipv4Addr> for IpAddrUnspec {
     }
 }
 
+impl From<std::net::IpAddr> for IpAddrUnspec {
+    fn from(value: std::net::IpAddr) -> Self {
+        match value {
+            std::net::IpAddr::V4(v4) => v4.into(),
+            std::net::IpAddr::V6(v6) => v6.into(),
+        }
+    }
+}
+
 impl csv::CsvWrite for IpAddrUnspec {
     type Context = u8;
     const DESC: csv::Desc = csv::Desc::Atom;
